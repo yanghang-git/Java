@@ -1,0 +1,157 @@
+git:
+	常用指令:
+		git init : 初始化git仓库。
+
+		git config user.name userName [--global] : 设置签名下的用户名。默认仓库级别。
+		git config user.email userEmail [--global] : 设置签名下的邮箱。 默认仓库级别。
+			--global : 如果加上则更改为用户级别。
+
+		git status : 查看当前git仓库的分支/工作区/暂存区的状态。
+
+		git add fileName : 将工作区的 "新建/修改" 添加到暂存区。
+
+		git rm [list] fileName : 
+			item: --cached 		将暂存区中的文件撤去出去。
+
+		git commit [list] fileName : 将文件从暂存区提交到本地库。 不输入名字提交全部
+			item: -m ""			注释说明信息
+
+		git log [list]: 查看已提交的历史版本、最完整的形式。 (HEAD 是指向当前的版本)
+			item: --pretty=[list] 	展示样式不同。
+				item: oneline	每条记录用一行数据战术。
+			item: --oneline 		每条记录用一行数据战术(has键显示前7位)。
+
+		git reflog ： 查看全部版本。版本用单行显示。不过多了一个 HEAD@{num}  num=0是当前指针。  移动到当前版本需要多少步。
+
+		git reset [list] : 恢复版本
+			item: --hard [list] 	在本地库移动HEAD指针、重置暂存区、重置工作其
+				item: 索引值(has键) 		根据指定的索引值/has键 前7位即可。
+				item: HEAD 				恢复当前版本。
+				item: HEAD^ 			只能进行版本的后退。 一个^ 后退一个版本。 可以输入多个   如 HEAD^^ 回退两个版本。
+				item: HEAD~num			只能进行版本的后退。 num 是几就后退几个版本。
+			item: --mixed [list] 	在本地库移动HEAD指针、重置暂存区。
+				item: 同 --hard。
+			item: --sort [list]		仅在本地库移动HEAD指针。
+
+		git help git指令 : 查看查询git指令的帮助文档。
+
+		git diff [list] [fileName] ： 比较文件。查看文件的更改详细信息。默认工作区和暂存区进行比较  如果不写文件名则比较全部文件。
+			item: 本地库历史版本 		工作区和本地库进行比较。
+
+		git remote [list] : 别名。 (常用于为github路径起别名)
+			item: -v				查看别名
+			item: add name value 	添加一个别名。value的别名就是name。 
+
+
+	提交:
+		
+		指令:
+		git commit [list] fileName : 将文件从暂存区提交到本地库。 不输入名字提交全部
+			item: -m ""			注释说明信息
+
+		输入默认指令后会进入vim编辑页面。需要在第一行输入本次提交的说明/注释。
+		提交完毕后会返回一些信息
+			[那个分支上 [(是否是根)] 索引值] 注释信息
+			其他的说明。
+
+
+	初始化仓库:
+		
+		git 分为三大块。
+			工作区 : 可视化文件。
+			暂存区 : 暂时存放文件的地方。
+			本地库 : 提交后的地方。 每一次提交都会永久保留不可删除。
+
+
+		指令:
+			git init ： 在当前目录下初始化git仓库。
+		
+			会在当前文件下创建一个.git的隐藏目录(存放的是本地库相关的子目录和文件、不要删除、也不要胡乱修改)。 其子目录有
+				config : 配置文件 配置信息
+				description :
+				HEAD :
+				hooks/ :
+				info/ ：
+				objects/ :
+				refs/ :
+
+		设置签名:
+			形式: 
+				用户名: tom
+				Email地址: goodMorning@git.com
+
+			作用: 
+				区分不同开发人员的身份。
+
+			辨析:
+				设置的签名和登录远程库(代码托管中心)的账号、密码没有任何关系。
+
+			指令:
+				git config user.{name / email} xxx [--global] :	项目级别/仓库级别 : 仅在当前本地库范围有效。
+					--global : 用户级别 : 登入当前操作系统的用户范围。
+						例:	
+							git config [--global] user.name tom
+							git config [--global] user.email goodMorning@git.com
+					
+			级别优先级:
+				就近原则 : 项目级别优先于系统用户级别，二者都有时采用项目级别的签名。
+				二者都没有不允许。
+
+			保存位置:
+				项目级别:
+					会保存到 warehousePath/.git/config 配置文件中。
+				
+				用户级别:
+					用户家目录 /c/Users/UserName/.gitconfig 或 ~/.gitconfig
+
+				格式为:
+					[user]
+						name = tom
+						email = goodMrning@git.com
+
+
+	分支管理:
+		什么是分支?
+			在版本控制过程中、使用多条线同时推进多个任务。
+
+		分支的好处?
+			同时并行推进多个功能开发、提高开发效率。
+			各个分支在开发过程中、如果某一个分支开发失败、不会对其他分支有任何影响、失败的分支删除重新开始即可。
+
+		合并分支:
+			将两个分支的内容合并到一起、被合并的分支不会消失。
+			
+			如果两个分支操作的是同一行。则会出现冲突。 当前分支会有一个合并状态 MERGING
+				如果出现冲突合并以后。文件会将两个都保存下来。并加以区别
+					>>>>>> HEAD
+					xxxxx 当前分支更改的内容
+					=========
+					xxxxx name分支更改的内容
+					<<<<<< name
+
+				将文件内容修改(删除特殊符号、与另一个人沟通删除 等等...) 。 后再次提交就会接触合并状态
+					此时 git commit 不可以指定文件名称。但是可以写 -v "" 注释说明 
+					但是 git add 需要明确文件名称。 
+			
+
+
+		常用指令:
+			git branch [list] : 
+				list: -v 		查看所有分支的情况。附加最近版本信息。 索引值 注释说明 文件
+				item: name 		创建名称为name的分支。
+
+			git checkout name : 切换名称为name的分支。
+
+			git merge name : 将name分支的内容合并到当前分支上。
+
+
+
+
+	和github交互:
+		常见指令:
+			git push path 分支名称 : 将仓库内指定 分支 推送到 远程仓库(路径为path)。
+
+			git clone path : 将远程仓库(路径为path)的内容克隆到当前文件中。 整个仓库、别名、自动初始化。
+
+<hr/>
+github:

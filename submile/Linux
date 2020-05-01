@@ -1,0 +1,501 @@
+Linux终端常用命令
+
+	关机：
+		halt
+		shutdown -h now
+		shutdown -h x   : x分钟后关机
+		
+	重启：
+		shutdown -r now
+		reboot
+
+	将内存的数据同步到磁盘上:(在重启或关机之前执行一次本命令)
+		sync
+
+	查看ip地址:
+		ifconfig
+
+	测试网络是否互通:
+		ping ipPath;
+
+	清空当前页面内容：
+		clear
+
+	管道符号:
+		start | end : 将前一个命令的处理结果输出传递给后面的命令处理。
+
+
+	<hr/>
+	帮助指令:
+		man 指令/配置文件 : q退出  (功能描述、获取帮助信息)
+		help 命令   (功能描述、获得shell内置命令的帮助信息)
+
+
+	<hr/>
+	时间日期类:
+		date [list] : 显示当前时间
+			item: +%Y 	显示当前年份,
+			item: +%m 	显示当前月份,
+			item: +%d 	现在当前天数,
+			item: "+%Y-%m-%d:%H.%M.%S" 	显示年月日时分秒、可拆开显示,
+			item: -s stringDateTime 	设置系统当前时间、如"yyyy-mm-dd HH.MM.ss"。
+
+		cal [list] : 显示本月日历
+			item: yyyy 	显示yyyy年的全部日历。
+
+
+	<hr/>
+	搜索查找类:
+		find serachCatalogName [list] :	遍历所有子目录、将满足条件的文件或目录显示出来。
+			item: -name fileName.suffix		根据文件名称进行查找,
+			item: -user userName			根据文件的拥有者(用户)进行查找,
+			item: -size [list]num(计算机单位)		根据文件的大小进行查找。
+				item: + 	大于
+				item: - 	小于
+				item:empty 	等于
+
+		locate {catatlogName/fileName} : 可以快速的定位文件路径、locate指令利用事先建立在系统中所以文件名称及路径的locate数据库实现快速定位查询的文件。
+										 locate无须遍历整个文件系统、查询速度较快。为了保证查询结果的准确性、管理员必须定期更新locate时刻。
+			ps: locate是基于数据库进行查询、所以第一次运行之前、必须使用"updatedb"指令创建locate数据库。
+
+		grep [list] searchValue sourceFile : 过滤内容
+			item: -n 	显示匹配行及行号,
+			item: -i 	忽略字母大小写,
+			item: -ni 	结合上面两个。
+			ps: 常搭配 | 使用。如 cat xxx.txt | grep -ni searchValue
+
+
+	<hr/>
+	压缩解压类:
+		gzip FileName.suffix [FileName.suffix] [...] : 压缩文件,源文件不会保留、压缩后的文件名: 源文件名.后缀名.gz
+
+		gunzip FileName.Suffix.gz [FileName.Suffix.gz] [...] : 解压文件,源文件不会保留、解压后的文件名: 源文件名.后缀名
+
+
+		zip [list] FileName.zip {CatalogName/FileName.suffix} : 压缩文件/目录 文件后缀为.zip
+			item: -r 	压缩目录。
+
+		unzip [list] FileName.zip : 解压文件到当前目录
+			item: -d catalogName 	指定解压后文件的存放路径。
+
+
+		tar [list] fileName.tar.gz {catalogName/fileName.suffix} [{catalogName/fileName.suffix}] [...] : 打包文件/目录 文件后缀为.tar.gz
+			item: -c 	产生.tar打包文件,
+			item: -v 	在压缩/解压时显示详细信息,
+			item: -f 	指定压缩后的文件名,
+			item: -z 	打包同时压缩,
+			item: -x 	解包.tar文件。
+			ps: 所有的item都可以灵活搭配。如压缩 cvfz  解压 xvzf。 
+				解压到xxx目录: tar -xvzf fileName.tar.gz -C catalogName 
+					ps: 目录实现必须存在。
+
+
+<hr/>
+进程
+	基本介绍:
+		在Linux中、每个执行的 程序(代码) 都称为一个进程。每一个进程都分配一个ID号,
+		每一个进行、都会对应一个父进程、而这个父进程可以复制多个子进程,
+		每个进程都可能以两种方式存在的。 前台与后台 、前台: 用户在屏幕上可以操作的,	 后台: 实际在操作、用户无法看到,
+		一般系统的服务都是以后台的方式存在、而且都会常驻在系统中。直到关机才结束。
+
+	使用ps指令查询信息的格式:
+		USER 	PID		PPID	%CUP	%MEM	VSZ		RSS		TTY		STAT 	START 	TIME 	COMMAND
+			USER: 用户名、当前进程是那个用户执行的,
+			 PID: 进程的ID,
+			PPID: 当前进程的父进程,
+			%CPU: 占用CPU的百分比,
+			%MEM: 占用内存的百分比,
+			 VSZ: 使用的虚拟内存(KB),
+			 RSS: 使用的物理内存(KB),
+			 TTY: 使用的终端名称、简写,
+			STAT: 进程的状态、 
+		   START: 进程启动的时间,
+		    TIME: 占用CPU的总计时间,
+		 COMMAND: 启动进程所用的指令行、如果过长会被截断显示。
+				
+		进程状态的说明: S = 休眠(sleep);	R = 运行(run);	D = 短期等待;	Z = 僵死进程		T = 被跟踪/被停止		N = 比普通进行优先级更低 	s = 会话先导进程,
+
+	常用指令:
+		ps [list] : 查看目前系统中、有哪些正在执行以及它们执行的状况。
+			item: -a 	显示当前终端所有的进行信息,
+			item: -u 	以用户的格式显示进程信息,
+			item: -x 	显示后台进行运行的参数,
+			item: -ef 	查看父进程。
+
+		kill [list] PID : 终止进程
+			item: -9 	强迫进程立即停止。
+
+		killall 进程名 : 终止进程、支持通配符
+
+		psterr [lsit] : 以数状的形式来展示
+			item: -p 	显示进程的PID,
+			item: -u 	显示进程的所属用户。
+
+
+<hr/>
+服务(service)管理
+	服务(service)本质就是进程、但是运行在后台的、通常都会监听某个端口、等待其他程序的请求、因此我们又称为守护线程。 比如: mysql、 sshd、 防火墙等...
+
+	常用指令
+		service serviceName [list] : 操作服务
+			item: start 	启动,
+			item: stop		停止,
+			item: restart	重启,
+			item: reload	重载,
+			item: status	状态。
+				ps: centOS7.0后、 不在使用service, 而是systemctl 操作大概一致。只是临时生效、重启以后恢复。
+
+		telnet	ip 端口 : 判断ip地址下的端口是否可连接。
+			ps: 这是windows系统下的 dos命令
+
+		chkconfig [list] : 查看/设置 每个运行级别下的服务
+			item: --list 	查看全部服务,
+			item: serviceName --list 	查看指定服务,
+			item: --level [0-6] serviceName {on(自启)/off(关闭)}	 给每个服务的各个运行即别设置自启动/关闭、不写即别则默认全部。
+				ps: 设置完毕以后需要重启机器reboot才会生效。
+
+
+<hr/>
+用户管理
+	概念:Linux系统是一个多用户多任务的操作系统、任何一个要使用系统资源的用户,都必须首先向系统管理员申请一个账号。然后以这个账号的身份进入系统。
+		在Linux下可以存在多个用户、同时也含有多个组、和家目录(存在/ home/目录下。其有各个创建的用户对应的家目录、当用户登入时会自动的进入到自己的家目录中。)
+		一个用户至少属于一个组、也可以同时属于多个组。创建完毕后可以进行组的更改。
+
+		组: 类似于角色、系统可以对有共性的多个用户进行统一的管理。
+
+	目录:
+		/etc /passwd : 用户配置文件(用户信息)
+		/etc /group  : 组配置文件(组信息)
+		/etc /shadow : 口令配置文件(密码和登入信息，加密)
+
+	基本命令:
+		添加用户:
+			useradd [list] userName : 如为未为新用户指定组、则默认创建一个跟新用户同名的组,并且将新用户添加到其组。
+				item: -d path : 为新用户指定家目录。(多个用户不能共用一个家目录、path不能已存在)
+				item: -g groupName : 为新用户指定组。
+
+		指定/修改密码:
+			passwd userName 回车。输入密码即可(输入密码不会有显示)
+
+		删除用户:
+			userdel [-r] userName : 保留家目录(常用); -r 删除同时家目录
+
+		查询用户信息:
+			id userName 
+
+		切换用户:
+			su - userName : 由高权限切换到低权限时不需要输入密码、反之需要
+			exit : 回到原来用户。 
+
+		查看当前用户:
+			whoami : 返回userName
+			who am l : 返回格式 userName pts datetime (ip)
+
+		注销用户:
+			logout (在图形化界面上无效、运行级别3下有效)
+
+
+<hr/>
+组管理和权限管理
+	Linux中每个用户必须属于一个组，不能独立于组外。在Linux中每个文件/目录都有所有者、所在组、其他组的概念。
+		所有者 -> 谁创建所有就是谁,
+		所在组 -> 默认情况下时所有者所在的组、可以更改,
+		其他组 -> 除去所在组。
+
+	组常用指令:
+		groupadd groupName : 添加组
+
+		groupdel groupName : 删除组
+			
+		usermod [list] : 更改组
+			item: -g groupName userName 	更改用户所在组
+			item: -d catalogName userName newLoginDefaultCatalogName 	更改用户登入时默认目录。
+		
+	<hr/>
+	修改权限类:
+		chmod [list] {fileName.suffix/catalogName} : 修改文件/目录权限
+			item: flagList={r,w,x} [,flagList={r,w,x}][,...] 	明确指定权限,
+			item: flagList+{r,w,x} [,flagList+{r,w,x}][,...]	增加权限,
+			item: flagList-{r,w,x} [,flagList-{r,w,x}][,...]	删除权限,
+				flagList:
+					item: u 所有者,
+					item: g 所有组,
+					item: o 其他人,
+					item: a 全部(u,g,o的综合)。
+			item: numnumnum		num=number r=4,w=2,x=1 如 751 -> u=rwx,g=rx,o=x
+
+		chown [list] targetFileName.suffix : 更改文件的所有者、但是不更改所在组。
+			item: newUserName	 只更改所有者,
+			item: newUserName:newGroupName 		即更改所有者又更改所在组,
+			item: -R 	修改本身即递归子文件的全部、可以搭配前两个使用。
+
+		chgrp [-R] newGroupName targetFileName.suffix : 更改文件的所在组、但是所有者不更改。 -R 修改全部
+
+
+<hr/>
+文件
+	使用ls -l显示的内容。
+		文件类型 文件所有者权限 文件所在组的用户权限 文件其他组的用户权限. 个数 文件所有者名字 文件所在组名字 文件大小 最后修改时间 文件名
+			文件类型:
+				item: - 普通文件,
+				item: d 目录,
+				item: l 软连接,
+				item: c 字符设备{键盘, 鼠标},
+				item: b 块文件、硬盘。
+			文件所有者权限:
+				item: r(4) 只读(read),
+				item: w(2) 修改内容(write),
+				item: x(1) 可执行(execute)。
+			文件所在组的用户权限:
+			文件其他组的用户权限:
+				list: 文件
+					item: r(4) 只读(read),
+					item: w(2) 修改,目录内创建、删除、重命名(write),
+					item: x(1) 可进入该目录(execute)。
+				list: 目录
+					item: r(4) 只读(read),
+					item: w(2) 修改内容(write),
+					item: x(1) 可执行(execute)。
+			个数:
+				item: 文件 硬链接数,
+				item: 目录 子目录数。
+			文件大小:
+				item: 文件 多少byte,
+				item: 目录 4096。
+
+
+	<hr/>
+	文件目录类:
+		pwd ：显示当前工作路径的绝对路径。
+		
+		ls [list] path/file : 展示文件信息
+			item: -a 显示当前目录有的文件和目录、包括隐藏的,
+			item: -l 以列表的方式显示信息,
+			item: -ahl  查看文件的所有者/所在组信息。
+		
+		cd [list] : 切换路径
+			item: 绝对路径和相对路径,
+			item: ~/: 	回到自己家目录,
+			item: ..  	回到上一级目录。
+
+		mkdir [list] catalogName : 创建目录
+			item: -p 	创建多级目录。
+
+		rmdir emptyCatalogName : 删除空目录
+		
+		touch fileName.suffix [fileName.suffix ...] : 创建一个或多个空文件 
+
+		cp [list] source target : 拷贝文件到指定的目录
+			item: -r 	复制整个文件夹,
+			ps: 如果发现有重名的文件则会提示是否要覆盖。 /cp replace cp 默认全部覆盖。
+
+		rm [list] {fileName.suffix/catalogName}	 : 删除文件/目录
+			item: -r 	删除整个文件夹,
+			item: -f 	强制删除不提示,
+
+		mv oldNameFile newNameFile : 重命名
+		mv {oldCatalog/fileName.suffix} newCatalog   : 移动文件
+
+		cat [list] fileName : 查看文件的内容(只读)
+			item: -n 	显示行号。
+			ps 常搭配more使用。分页显示。 cat... | more
+
+		more catalogFileName[.suffix] : 基于VI编辑器的文本过滤器、它以全屏幕的方式按页显示文本文件的内容。
+			快捷键:	
+				操作				功能
+				空格(space)		向下翻一页,
+				Enter			向下翻一行,
+				q 				退出more,
+				Ctrl+F 			向下滚动一屏,
+				Ctrl+B 			向上滚动一屏,
+				=				输出当前的行号,
+				:f 				输出当前文件名和当前行号。
+
+		less catalogFileName[.suffix] : 功能和more类似。	优势: 根据显示加载需要的内容、对显示大型文件具有较高的效率。
+			快捷键:
+				操作				功能
+				空格(space)	 	向下滚动一页,
+				[pagedown]		向下滚动一页,
+				[pageup]		向上滚动一页,
+				/字符串			向下搜寻"字串"的功能。 n: 向下查找, N:向上查找,
+				?字符串			向上搜寻"字串"的功能。 同上,
+				q 				退出less。
+
+		{fileName[.suffix]/catalog/value/text...} > [catalog/]targetFileName.suffix : 将前面的内容覆盖到后面的文件中
+		{fileName[.suffix]/catalog/value/text...} >> [catalog/]targetFileName.suffix : 将前面的内容追加到后面的文件中
+
+		echo [list] * : 输出内容到控制台
+
+		head [list] {catalog/flieName.suffix} : 输出文件的前10行内容
+			item: -n num 	输出前num行。
+
+		tail [list] {catalog/flieName.suffix} : 输出文件的后10行内容
+			item: -n num 	输出后num行,
+			item: -f 		实时追踪文档的所有更新。
+
+		ln -s {catalog/sourceFile} connectName : 软连接/符号链接。类似windows的快捷方式,主要存放了其他文件的路径
+
+		history [list]: 查看已经执行过的历史指令、也可以执行历史指令
+			item: num 		显示最近执行的num条指令,
+			ps !num : 执行编号为num的指令。
+
+
+<hr/>
+任务调度
+	定时的调度我们的脚本或者代码， 代码/角度 = 完成某些任务
+		简单的任务、可以不写脚本、直接在crontab中加入任务即可,
+		比较复杂的任务、需要写脚本(Shell编程)
+
+	基本指令:
+		crontab [list] : 系统在某个时间执行的特定的命令或程序
+			item: -e 	编辑crontab定时任务,
+			item: -i 	查询crontab任务,
+			item: -r 	删除当前用户的所有crontab任务。
+
+
+<hr/>
+Shell编程:
+	格式
+		占位符1 占位符2 占位符3 占位符4 占位符5 执行的操作(Linux命令行)
+
+	五个占位符开头:
+		第一个 	一个小时当中的第几分钟  	0-59
+		第二个	一天当中的第几个小时		0-23	
+		第三个 	一个月中的第几天			1-31
+		第四个 	一年当中的地几个月		1-12
+		第五个 	一周当中的周几			0~7(0/7都代表周日)
+	
+	特殊符号:
+		  *:	代表任何时间,
+		  ,:	待变不连续的时间,
+		  -:	代表连续的时间范围,
+		*/n:	代表每隔多次时间执行一次。
+
+	案例：
+		45 22 *  *  * : 每天的22点45分钟执行命令,
+		0  17 *  *  1 : 每周1的17点0分执行命令,
+		0  5  1,15 * *: 每月1号和15号的凌晨5点0分执行命令,
+		40 4  *  * 1-5: 每周1到周五的凌晨4点40分执行命令,
+		*/10  4 * * * : 每天凌晨4点，每个十分钟执行一次命令,
+		0  0  1,15 * 1: 每月1号和15号、每周1的0点0分都会执行命令。  
+
+
+<hr>
+Linux运行级别
+	配置文件: 系统的运行级别配置文件 /etc /inittab
+	0: 关机
+	1: 单用户(找回丢失密码)
+	2: 多用户无网络服务
+	3: 多用户有网络服务
+	4: 保留
+	5: 图形界面
+	6: 重启
+
+	指定运行级别:
+		init num ： num = 0 ~ 6
+
+
+<hr/>
+虚拟机网络连接的三种形式。
+	1. 桥连接(不常用)
+		Linux可以和其他的系统通信、但是可能造成ip冲突。
+		原因:假如在同一个网络环境下、例192.168.0.xx。所有的连接都使用0~255个地址、而网关是1广播是255、所以可以供使用的地址只有253个。
+
+	2. NAT 网络地址转换(常用)
+		linux可访问外网，不会造成ip冲突。
+		原因:在启动虚拟机时、本机会有两个ip地址。一个则是本机的主ip、跟同一个局域网的其他连接的通信，而另一个则是为Linux新生的ip地址、跟Linux处于同一个网络。而同一个局域网下的其他地址则无法访问到Linux的ip。而Linux可以通过主ip(代理)访问它们(外网)。
+
+	3. 主机模式(不常用)
+		Linux是一个独立的主机，不能访问外网。
+		原因:Linux的ip地址是完全独立的、不会跟外网发生任何关系。
+
+
+<hr/>
+分区。
+	1. /boot区
+		引导分区。Linux在启动的时候需要一些引导文件、而这些引导文件就放在/boot分区中。
+
+	2. swap区(虚拟内存)
+		交换分区。当系统内存不够用时、可以用swap暂时替代。不宜分配太多(物理内存的1.5~2倍之间)。
+
+
+<hr/>
+目录结构。
+	采用层级式的树状目录结构、此结构中的最上层是根目录"/",然后再此目录下再创建其他的目录。(Linux世界里、一切皆文件)
+		根目录 
+			/
+		子目录
+			bin 常用指令
+			dev 管理设备(将硬件映射成文件进行管理)
+			etc 存放配置文件
+			home 家目录(创建一个用户的时候、home下会创建一个对应的文件)
+			lib/lib64 静态库(文件通常都是.os)
+			media 读取设备(DVD U盘 光驱)
+			mnt 挂载
+			opt 安装软件的空间
+			proc 内存/内核(不要动)
+			root root用户的一些文件及信息
+			sbin 超级用户/高权限用户能够使用的指令
+			selinux 保护linux的 类似电脑管家/360
+			sys 系统(不要动)
+			srv 服务启动后需要提取的数据。(不要动)
+			tmp 临时文件夹
+			usr 用户(自己安装的文件和应用程序)
+			var 变量/日志	
+
+
+<hr/>
+远程
+	前提：sshd开启。(端口号为:22)
+		查看方式：终端 setup -> 系统服务 -> sshd 嵌满带星号的是启动的。
+		使用Xshell * 进行登入
+
+
+<hr/>
+vim编辑器(使用命令行)
+	模式的切换
+		vim fileName.xx 进入正常模式、
+		进去以后输入 i/a 进入编辑模式、想要退出按下ESC则进去正常模式。
+		从正常模式切换回命令行则输入 ":" / "/"即可 
+			输入 :wq WriteQuit(写入并退出)
+				 :q Quit(退出)
+				 :q! Quit(强制退出)
+
+	快捷键(最基本)
+		快速复制:在正常模式下、输入yy则表示复制了一行、如果输入了2yy代表复制了两行(本行和下一行)... p是黏贴
+		快速删除:在正常模式下、输入dd则表示删除了一行、如果输入了2dd代表删除了两行(本行和下一行)...
+		快速查找:命令行模式下、输入 /"要查找的内容" 即可。会将查到内容突出显示。输入n则查看下一个。
+		快速置顶:在正常模式下、输入gg则会快速回到第一行。
+		快速置尾:在正常模式下、输入G则会快速回到最后一行。
+		撤销回退:在正常模式下、输入u即可。
+		快读换行:在正常模式下、输入一个数字、代表行数。然后按下Shift+g即可。
+
+	设置
+		显示行号:命令行模式下、输入 :set nu 即可。 nu:number
+		取消行号:命令行模式下、输入 :set nonu 即可。
+
+
+<hr/>
+rpm包
+	用于互联网下载包的打包及安装工具、 包含在某些Linux分发版中。它生成具有.RPM扩展名的文件。	
+
+	常用指令
+		rpm [list] : 查询已安装的rpm列表
+			item: -qa 	查询所有,
+			item: -q 软件包名 	查询软件包是否安装,	
+			item: -qi 软件包名 	查询软件包信息,
+			item: -ql 软件包名 	查询软件包中的文件,
+			item: -qf 软件全路径名	查询文件所属的软件包,
+			item: -e [--nodeps] 软件包名称		卸载软件包、--nodeps强制卸载,
+			item: -ivh rpm包全路径名称	安装 i=insetall 安装 	v=verbose 提示 	h=hash 进度条。
+				ps: 需要挂载上安装cnetos的ios文件、然后到/media/文件下去找rpm包。
+
+
+<hr/>
+yum包
+	Shell前端软件包管理器。基于RPM包管理、能够从指定的服务器自动下载RPM包并安装。可以自动处理依赖关系、并一次性安装所有依赖的软件包。
+
+	常用指令
+		yum list : 查询yum服务器所有软件、 追加 | grep xxx 可以查看是否有需要安装的软件
+
+		yum insertall xxx : 下载安装

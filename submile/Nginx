@@ -1,0 +1,316 @@
+nginx基本概念
+	nginx是什么，能做什么事情?
+		Nginx (" engine x")是一个高性能的HTTP和反向代理服务器特点是占有内存少，并发能力强，事实上nginx的并发能力确实在同类型的网页服务器中表现较好。
+		Nginx专为性能优化而开发，性能是其最重要的考量，实现上非常注重效率，能经受高负载的考验，有报告表明能支持高达50, 000个并发连接数。
+
+		反向代理:
+			正向代理:
+				在客户端(浏览器)配置代理服务器，通过代理服务器进行互联网访问。
+					
+			反向代理:
+				客户端对代理是无感知的，因为客户端不需要任何配置就可以访问，我们只需要将请求发送到反向代理服务器，由反向代理服务器去选择目标服务器获取数据后,在返回给客户端,此时反向代理服务器和目标服务器对外就是一一个服务器，暴露的是代理服务器地址，隐藏了真实服务器IP地址。
+
+		负载均衡:
+			单个服务器解决不了，我们增加服务器的数量，然后反向代理服务器将请求分发到各个服务器上，将原先请求集中到单个服务器上的情况改为将请求分发到多个服务器上，将负载分发到不同的服务器，也就是我们所说的负载均衡
+		
+		动静分离:
+			为了加快网站的解析速度，可以把动态页面和静态页面由不同的服务器来解析，加快解析速度。降低原来单个服务器的压力。
+			
+			Nginx动静分离简单来说就是把动态跟静态请求分开,不能理解成只是单纯的把动态页面和静态页面物理分离。严格意义上说应该是动态请求跟静态请求分开，可以理解成使用Nginx处理静态页面，Tomcat处理动态页面。动静分离从目前实现角度来讲大致分为两种
+				一种是纯粹把静态文件独立成单独的域名,放在独立的服务器上,也是目前主流推崇的方案;
+				另外一种方法就是动态跟静态文件混合在一起发布，
+
+				通过nginx来分开。通过location指定不同的后缀名实现不同的请求转发。通过expires参数设置，可以使浏览器缓存过期时间，减少与服务器之前的请求和流量。
+					具体Expires定义: 是给一个资源设定一个过期时间，也就是说无需去服务端验证,直接通过浏览器自身确认是否过期即可，所以不会产生额外的流量。此种方法非常适合不经常变动的资源。(如果经常更新的文件,不建议使用Expires 来缓存)，我这里设置3d，表示在这3天之内访问这个URL，发送一个请求，比对服务器该文件最后更新时间没有变化，则不会从服务器抓取，返回状态码304，如果有修改，则直接从服务器重新下载，返回状态码200。
+
+
+nginx常用指令(Linux):
+	必须处于nginx的目录下:
+		usr/local/nginx/sbin
+
+	nginx -v : 查看nginx版本号
+
+	nginx : 启动nginx
+
+	nginx -s stop : 关闭nginx
+
+	nginx -s reload : 重新加载nginx
+
+
+nginx配置文件:
+	路径:
+		/usr/local/nginx/conf/nginx.conf
+
+	文件组成:
+		由三部分组成。
+		1. 全局。
+			从配置文件开始到events块之间的内容，主要会设置一些影响nginx服务器整体运行的配置指令。
+				worker_processes default 1 ： 	值越大可以支持的并发数量也越多。(受硬件影响)
+
+		2. events。
+			events块涉及的指令主要影响Nginx服务器与用户的网络连接。 这部分的配置对Nginx的性能影响较大,在实际中应该灵活配置。
+				worker_connections defaul 1024 : 	支持的最大链接数。
+
+		3. http
+			Nginx服务器配置中最频繁的部分, 代理、缓存和日志定义等绝大多数功能和第三方模块的配置都在这里。
+				http块也可以包括http全局块、server 块。
+
+			1. 全局
+				包括文件引入、MIME-TYPE定义、日志自定义、连接超时时间、单链接请求数上限等。
+
+			2. server
+				这块和虚拟主机有密切关系,虚拟主机从用户角度看,和一台独立的硬件主机是完全-样的, 该技术的产生是为了节省互联网服务器硬件成本。。
+				每个http块可以包括多个server块,而每个server块就相当于一个虚拟主机。
+				而每个server 块也分为全局server块,以及可以同时包含多个locaton 块。
+
+				1. 全局:
+					最常见的配置是本虚拟机主机的监听配置和本虚拟主机的名称或IP配置。
+
+				2. location
+					一个server块可以配置多个location 块。。
+					这块的主要作用是基于Nginx服务器接收到的请求字符串(例如server. name/uri-string) , 对虚拟主机名称(也可以是IP别名)之外的字符串(例如前面的/uri-string )进行匹配,对特定的请求进行处理。地址定向、数据缓存和应答控制等功能,还有许多第三方模块的配置也在这里进行。
+
+					详解:
+						格式 location 匹配条件  匹配内容
+							匹配内容: 正则表达式
+
+							条件:
+								item:   	空。 任何都可以匹配得到。
+								item: =		必须与指定的模式精确匹配。
+								item: ~ 	指定的正则表达式要区分大小写。
+								item: ~* 	指定的正则表达式不区分大小写。
+								item: ^~ 	类似于无修饰符的行为，也是以指定模式开始，不同的是，如果模式匹配，那么就停止搜索其他模式了。
+								item: @ 	定义命名location区段，这些区段客户段不能访问，只可以由内部产生的请求来访问
+						
+						查找顺序和优先级
+							1. 带有 = 的精确匹配优先
+							2. 没有修饰符的精确匹配
+							3. 正则表达式按照他们在配置文件中定义的顺序
+							4. 带有 ^~ 修饰符的，开头匹配
+							5. 带有 ~  或 ~* 修饰符的，如果正则表达式与URI匹配
+							6. 没有修饰符的，如果指定字符串与URI开头匹配
+
+
+实例:
+	1. 反向代理
+		1.1 实现效果: 
+			打开浏览器、输入网址www.123.com, 跳转到linux系统下的tomcat主页。
+
+			准备工作:
+				1. 启动tomcat, 端口号默认: 8080
+				2. 对外开放访问的端口: firewall -cmd --add -port=8080/tcp --permanent  (测试是否能正常访问) 
+					需要重启防火墙: firewall -cmd --reloda
+					查看开放的端口: firewall -cmd --list -all
+				3. windows的host文件进行配置, 配置域名映射的ip地址。 
+					输入域名后优先去host文件中查看有没有相应的配置。如果没有再去网络上查找。
+					默认路径: C:\Windows\System32\drivers\etc\hosts
+						在最后添加内容:ip 域名。  
+							Demo: 192.168.13.15 www.123.com
+
+			具体配置:
+				在Nginx进行请求转发的配置(反向代理)
+					在Nginx的配置文件找到 http 中的 servrce 将ip路径修改: servrce_name 192.168.13.15; 默认是 : localhost;
+					在location / {} 内增加转发路径。 	增加内容: proxy_pass http://127.0.0.1:8080;
+						意思: 如果访问的式 192.168.13.15 端口为 80  	则将请求转发给  http://127.0.0.1 端口为 8080 
+
+		1.2 实现效果:
+			使用Nginx反向代理、根据访问的路径跳转到不同端口的服务中。 Nginx监听的端口为 9001
+				访问 http://127.0.0.1:9001/edu/		跳转到 127.0.0.1:8080
+				访问 http://127.0.0.1:9001/vod/		跳转到 127.0.0.1:8081
+
+			准备工作:
+				1. 准备两个tomcat并启动。 端口号分为为: 8080  8081
+				2. 对外开发端口。
+
+			具体配置:
+				在Nginx进行请求转发的配置(反向代理)。
+					在http下新增一个 service{}; 
+						service{
+							listen			9001; # 监听的端口号。
+							service_name	192.168.13.15;	# 监听的ip地址。
+
+							location ~ /edu/ {
+								proxy_pass http://127.0.0.1:8080;
+							}
+
+							location ~ /vod/ {
+								proxy_pass http://127.0.0.1:8081;
+							}
+						}
+
+
+	2. 负载均衡:
+		实现效果:
+			浏览器地址栏输入地址: http://192.168.17.129/edu/a.html 	负载均衡效果, 平均 8080 和 8081 端口中。
+
+		准备工作:
+			1. 准备两台 tomcat 服务器、一台 8080, 一台 8081
+			2. 在两台tomcat里面 webapps 目录中、创建名称是 edu 文件夹、在edu文件夹中创建页面a.html、用于测试。
+
+		具体配置:
+			在http 中添加 upstream myserver{...} 并在 server 内的 location / {...} 配置内容
+				upstream myserver {
+					[ip_hash;]
+					server 192.168.17.129:8080 [weidht= number];  # 想要转发的地址 + 端口
+					server 192.168.17.129:8081 [weidht= number];  # 同上、可存在多个
+					[fair;]
+				}
+
+				server {
+					location / {
+						proxy_pass: http:// myserver; # 新增。 myserver(自己设置的名字)
+					}
+				}
+
+		分配策略:
+			1. 轮询(默认)
+				每个请求按时间顺序逐-分配到不同的后端服务器，如果后端服务器down掉，能自动剔除。
+			2. weight
+				weight 代表权重, 默认为1, 权重越高被分配的客户端越多。 
+				指定轮询几率, weight和访问率成正比, 用于后端服务器性能不均的情况。
+					为ip地址后面添加 weight=number 即可。
+			3. ip_hash
+				根据每个请求访问ip的hash结果分配, 这样每个访客访问一个后端服务器, 可以解决session共享的问题。
+					在首行添加 ip_hash 即可。
+			4. fair(第三方)
+				按后端服务器的响应时间来分配请求, 响应时间短的优先分配。
+					在尾行添加 fair 即可。
+
+
+	3. 动静分离:
+		实现效果:
+			动态请求请求 tomcat 、静态请求请求 静态资源服务器
+
+		准备工作:
+			在Linux中创建静态资源。用于进行访问。
+
+		具体配置:
+			通过设置 http 中的 server 中的 location 来实现。
+				location /staticHtml/{
+					root /catalog/;		# 路径地址。 地址路径为: /catialog/staticHtml/ 。 如果是alias 则地址路径为: /catalog/
+					index index.html index.html;	# 初始打开的两个资源名称。 如果存在则跳转。
+				}
+
+				location /staticImg/ {
+					root /catalog/; 	# 路径地址。 地址路径为: /catialog/staticImg/
+					autoindex on;		# 列出文件目录。
+				}
+
+
+
+
+	4. 高可用集群:
+		什么是Nginx的高可用? 为什么会使用?
+			当Nginx宕机以后系统也可以正常运转。
+			因为Nginx也存在宕机的可能性。一旦宕机则整个系统都无法使用、所以需要加以处理并且解决。
+			
+
+			主备(从)的解决方式:
+				需要准备两个Nginx、一个主(MASTER) 备/从(BACKUP)。当MASTER宕机以后自动切换至BACKUP。并且两个Nginx的ip也不同。此时一个软件 keepalived 就可以解决这个问题。 
+					keepalived: 
+						提供了一个虚拟ip, 对外提暴露这个虚拟ip, 并将虚拟ip绑定到 MASTER 中。 
+						并且需要一个脚本来检测 MASTER 是否宕机(挂掉)、如果宕机则自动将虚拟ip绑定到 BACKUP 中。 
+			
+		准备工作:
+			1. 需要两台服务器。 
+				例:  一台ip为: 192.168.17.129。	另一台ip为:192.168.17.131。
+			2. 在两台服务器上都安装Nginx 和 keepalived。
+
+		具体配置(主从配置):
+			keepalived配置文件路径: /etc/keepalived/keepalived.conf
+			keepalived配置文件内容:
+				global_defs {	# 全局
+				   	notification_email {         # 设置 keepalived 在发生事件（比如切换）的时候，需要发送到的email地址，可以设置多个，每行一个。
+				    	acassen@firewall.loc
+				    	failover@firewall.loc
+				    	sysadmin@firewall.loc
+				   }
+				   notification_email_from Alexandre.Cassen@firewall.loc    # 设置通知邮件发送来自于哪里，如果本地开启了sendmail的话，可以使用上面的默认值。
+				   smtp_server 192.168.17.129   # 指定发送邮件的smtp服务器。
+				   smtp_connect_timeout 30      # 设置smtp连接超时时间，单位为秒。
+				   router_id LVS_DEVEL          # 是运行keepalived的一个表示，多个集群设置不同。 服务器名字
+				   									# Linux系统 /etc/hosts 添加名称。如 127.0.0.1 LVS_DEVEL
+				}
+
+				vrrp_script chk_http_port { # 脚本的配置
+					script "/catalog/fileName.sh" # 执行脚本的路径
+					interval 2		# 检测脚本执行的间隔 单位 秒
+					weight 2		# 权重
+										# 如果脚本执行结果为0，并且weight配置的值大于0，则优先级相应的增加
+										# 如果脚本执行结果非0，并且weight配置的值小于0，则优先级相应的减少
+										# 其他情况，维持原本配置的优先级，即配置文件中priority对应的值。
+										# 注意:
+										#	优先级不会不断的提高或者降低
+										#	可以编写多个检测脚本并为每个检测脚本设置不同的weight
+										#	不管提高优先级还是降低优先级，最终优先级的范围是在[1,254]，不会出现优先级小于等于0或者优先级大于等于255的情况
+										# 如果不写则以priority为基准。
+				}
+
+				vrrp_instance VI_1 {	# 虚拟ip的配置 
+					state MASTER 			# 备份服务器上将MASTER 改为 BACKUP 	如果不指定Master或者BACKUP,那priority最高的就是master
+					intterface eth0 		# 网卡名称 Linux 下通过 ifconfig 第一行 : 左侧就是网卡名称		监听的实际网口
+					virtual_router_id 51	# 主、备机的virtual_router_id 必须相同	
+											# 组播ID，通过224.0.0.18可以监听到现在已经存在的VRRP ID，最好不要跟现有ID冲突
+					priority 100			# 主、备机取不同的优先级，主机值较大、备份机值较小	权重为100，权重数字越大就越高
+					advert_int 1			# 发送组播包的间隔时间，默认为1秒
+					# smtp_alert			# 发送报警文件
+					
+					authentication {		# 这个是验证类型为PASS（明文）,密码为hdtv。验证类型也可以选择IPSEC，但是官方是不推荐的
+						auth_type PASS
+						auth_pass 1111
+					}
+					
+					virtual_ipaddress {		# 虚拟IP为 
+					192.168.17.50
+						192.168.17.50
+					}
+
+
+				}
+			keepalived检测脚本内容:
+				#! /bin/bash
+				A=`ps -C nginx -no-header |wc -1`
+				if [ &A -eq 0]; then
+					/catalog/ # Nginx启动路径
+					sleep 2
+					if [`ps -C nginx --no-header |wc -1` -eq 0]; then
+						killall keepliaved
+					fi
+				fi
+
+
+
+
+Nginx原理:
+	Nginx启动以后会有两个线程启动。分别是 mater 和 worker
+		mater是一个管理worker的。worker可以有多个。 
+
+		关系: 
+			管理员: 发送信号到 master进程
+				(Nginx)master:  发送信号到 worker进程	
+					(Nginx):worker1 、 worker2...: 	Client连接worker
+						Client1 、 Clinet2...
+
+	worker是如何工作的?
+		当管理员给master(Nginx)发送信号后。master(Nginx)会发送信号/通知给worker(Nginx)有一个Client来连接Nginx。此时所有的worker(Nginx)会去争抢这一个线程谁想抢到谁就进行处理。
+
+	master-workers的机制的好处。
+		1. 可以使用nginx -s reload 热部署。利用nginx进行热部署操作
+			如果有worker正在进行任务。则其他的worker则先进行更新内容、等执行任务完毕以后再更新内容。
+		2. 每个woker是独立的进程，如果有其中的一个worker出现问题，其他worker独立的，继续进行争抢，实现请求过程，不会造成服务中断
+			每个worker进程来说，独立的进程，不需要加锁，所以省掉了锁带来的开销，同时在编程以及问题查找时，也会方便很多。其次,采用独立的进程，可以让互相之间不会影响，一个进程退出后，其它进程还在工作，服务不会中断，master 进程则很快启动新的worker进程。当然worker进程的异常退出，肯定是程序有bug了，异常退出，会导致当前worker上的所有请求失败，不过不会影响到所有请求，所以降低了风险。
+
+	需要设置多少个worker? 
+		Nginx同redis类似都采用了io多路复用机制，每个worker都是一个独立的进程，但每个进程里只有一个主线程，通过异步非阻塞的方式来处理请求，即便是千 上万个请求也不在话下。每个worker的线程可以把一个cpu的性能发挥到极致。所以worker数和服务器的cpu数相等是最为适宜的。设少了会浪费cpu,设多了会造成cpu频繁切换上下文带来的损耗。
+			io多路复用机制在windows下不可以使用。
+
+	链接数worker_connection
+		这个值是表示每个worker进程所能建立连接的最大值，所以，一个nginx能建立的最大连接数，应该是worker_connections*worker_processes。当然，这里说的是最大连接数，对于HTTP请求本地资源来说，能够支持的最大并发数量是worker_connections*worker_processes，如果是支持http1.1的浏览器每次访问要占两个连接，所以普通的静态访问最大并发数是:worker_connections*worker_processes/2，而如果是HTTP作为反向代理来说，最大并发数量应该是worker_connections*worker_processes/4.因为作为反向代理服务器，每个并发会建立与客户端的连接和与后端服务的连接，会占用两个连接。
+		
+		1. 发送一个请求占用了worker的几个连接数?
+			2个 或者 4个。 
+			从client -> worker。 	从 worker -> client。  如果需要访问tomcat服务器 从worker -> tomcar。		从 tomcat -> worker。
+		2. Nginx有一个master，有四个worker，每个worker最大支持链接数为1024，支持的最大并发数是多少?
+			公式:
+				普通的静态访问: worker_connections * worker_processes / 2;
+				HTTP作为反向代理: worker_connections * worker_processes / 4;
